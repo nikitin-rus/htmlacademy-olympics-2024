@@ -1,48 +1,139 @@
 (function () {
-  /* Код компонента пишите здесь */
+    /* Код компонента пишите здесь */
 
-  const form = document.querySelector('#booking-form');
-  const phone = document.querySelector('#phone');
-  const checkin = document.querySelector('#checkin-date');
-  const checkout = document.querySelector('#checkout-date');
+    const form = document.querySelector('#booking-form');
 
-  /** @param {SubmitEvent} e */
-  function formSubmit(e) {
-    e.preventDefault();
+    /** @param {SubmitEvent} e */
+    function handleFormSubmit(e) {
+        e.preventDefault();
 
-    const phoneReg = /^((\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$/;
-    const dateReg = /^(\d{4}[-/.]\d\d[-/.]\d\d)|(\d\d.\d\d.\d{4})\$/;
+        const validFieldClassName = "field-correct";
+        const invalidFieldClassName = "field-error";
 
-    validateInput(phone, phoneReg);
-    validateInput(checkin, dateReg);
-    validateInput(checkout, dateReg);
+        /**
+         * Удаление всех пердыдущих класснеймов, 
+         * обозначающих валидность формы
+        */
 
-    const checkinDate = new Date(Date.parse(checkin.value));
-    const checkoutDate = new Date(Date.parse(checkout.value));
+        for (const field of form.querySelectorAll('.field-input')) {
+            field.classList.remove(validFieldClassName, invalidFieldClassName);
+        }
 
-    checkinDate.setHours(0);
-    checkoutDate.setHours(0);
+        /** Валидация телефона */
 
-    console.log((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+        const phone = document.querySelector('#phone');
 
-    if ((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24) < 4) {
-      checkin.classList.remove("field-correct");
-      checkout.classList.remove("field-correct");
-      checkin.classList.add("field-error");
-      checkout.classList.add("field-error");
+        addInputValidityClassName(phone, checkPhone(phone.value),
+            validFieldClassName, invalidFieldClassName);
+
+        /** Валидация дат */
+
+        const checkinDate = document.querySelector('#checkin-date');
+        const checkoutDate = document.querySelector('#checkout-date');
+
+        let isDateInputValid = false;
+        if (checkDate(checkinDate.value) && checkDate(checkoutDate.value)) {
+            const date1 = parseDate(checkinDate.value,
+                isDateWithHyphens(checkinDate.value));
+
+            const date2 = parseDate(checkoutDate.value,
+                isDateWithHyphens(checkoutDate.value));
+
+            if (((date2 - date1) / (1000 * 60 * 60 * 24)) >= 4) {
+                isDateInputValid = true;
+            }
+        }
+
+        addInputValidityClassName(checkinDate, isDateInputValid,
+            validFieldClassName, invalidFieldClassName);
+
+        addInputValidityClassName(checkoutDate, isDateInputValid,
+            validFieldClassName, invalidFieldClassName);
     }
-  }
 
-  /**
-   * @param {HTMLInputElement} input 
-   * @param {RegExp} regExp 
-   */
-  function validateInput(input, regExp) {
-    input.classList.add(regExp.test(input.value) ?
-      "field-correct" :
-      "field-error"
-    );
-  }
+    /**
+     * @param {string} date
+     * @param {boolean} isHyphens
+     * @returns {Date} date object
+     */
+    function parseDate(date, isHyphens) {
+        let year, month, day;
 
-  form.addEventListener('submit', (e) => formSubmit(e));
+        if (isHyphens) {
+            [year, month, day] = date.split("-");
+        } else {
+            [day, month, year] = date.split(".");
+        }
+
+        return new Date(year, month, day);
+    }
+
+    /** 
+     * @param {string} phone 
+     * @returns {boolean}  
+    */
+    function checkPhone(phone) {
+        const validSymbols = [" ", "(", ")", "-"];
+
+        if (phone[0] !== "+" || phone[1] !== "7") {
+            return false;
+        }
+
+        let numberCnt = 0;
+        for (const char of phone.slice(2)) {
+            const isCharNaN = isNaN(parseInt(char));
+
+            if (isCharNaN && !validSymbols.includes(char)) {
+                return false;
+            }
+
+            if (!isCharNaN) {
+                numberCnt++;
+            }
+        }
+
+        return numberCnt === 10;
+    }
+
+    /** 
+     * @param {string} date
+     * @returns {boolean}
+     */
+    function checkDate(date) {
+        return isDateWithHyphens(date) || isDateWithDots(date);
+    }
+
+    /** 
+     * @param {string} date
+     * @returns {boolean}
+    */
+    function isDateWithHyphens(date) {
+        return date[4] === "-" && date[7] === "-";
+    }
+
+    /** 
+     * @param {string} date
+     * @returns {boolean}
+    */
+    function isDateWithDots(date) {
+        return date[2] === "." && date[5] === ".";
+    }
+
+    /** 
+     * @param {HTMLInputElement} input
+     * @param {boolean} isInputValid 
+     * @param {string} validClassName
+     * @param {string} invalidClassName 
+    */
+    function addInputValidityClassName(
+        input, isInputValid,
+        validClassName, invalidClassName) {
+        if (isInputValid) {
+            input.classList.add(validClassName);
+        } else {
+            input.classList.add(invalidClassName);
+        }
+    }
+
+    form.addEventListener('submit', (e) => handleFormSubmit(e));
 })();
