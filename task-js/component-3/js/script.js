@@ -49,6 +49,48 @@
 
         addInputValidityClassName(checkoutDate, isDateInputValid,
             validFieldClassName, invalidFieldClassName);
+
+        /** Валидация количества проживающих */
+
+        const adults = document.querySelector('#adults');
+        const children = document.querySelector('#children');
+        const roomType = document.querySelector('.field-room-type input:checked');
+
+        let isGuestsGroupValid = true;
+
+        const adultsCnt = parseInt(adults.value) || 0;
+        const childrenCnt = parseInt(children.value) || 0;
+
+        if (adultsCnt < 1) {
+            isGuestsGroupValid = false;
+        }
+
+        if (childrenCnt > adultsCnt) {
+            isGuestsGroupValid = false;
+        }
+
+        switch (roomType.value) {
+            case "single":
+                if (adultsCnt > 1) {
+                    isGuestsGroupValid = false;
+                }
+                break;
+            case "double":
+                break;
+            case "family":
+                if (adultsCnt < 2 || children < 1) {
+                    isGuestsGroupValid = false;
+                }
+                break;
+            default:
+                throw new Error("Unknown room type.");
+        }
+
+        addInputValidityClassName(adults, isGuestsGroupValid,
+            validFieldClassName, invalidFieldClassName);
+
+        addInputValidityClassName(children, isGuestsGroupValid,
+            validFieldClassName, invalidFieldClassName);
     }
 
     /**
